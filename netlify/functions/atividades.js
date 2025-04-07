@@ -1,30 +1,26 @@
-const mysql = require('mysql2/promise');
-
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-});
-
 exports.handler = async (event, context) => {
+  const mysql = require('mysql2/promise');
+
   try {
-    const [rows] = await pool.query(`
-      SELECT * FROM atividades
-      ORDER BY FIELD(prioridade, 'Critico', 'Urgente', 'Regular', 'Normal')
-    `);
+    const connection = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+    });
+
+    await connection.query("SELECT 1"); // teste simples
+    await connection.end();
 
     return {
       statusCode: 200,
-      body: JSON.stringify(rows),
+      body: JSON.stringify({ message: "Conexão bem-sucedida!" }),
     };
   } catch (error) {
-    console.error("Erro ao processar a requisição:", error);
+    console.error("Erro de conexão:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Erro ao processar a requisição", detalhes: error.message }),
+      body: JSON.stringify({ error: "Falha na conexão", detalhes: error.message }),
     };
   }
 };
