@@ -1,0 +1,6 @@
+[build]
+  command = "npm run build"    # Se houver build; se não, pode ser vazio ou "echo 'Build complete'"
+  publish = "public"           # Pasta do seu front-end
+
+[functions]
+  directory = "netlify/functions"
