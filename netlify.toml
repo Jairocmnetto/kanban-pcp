@@ -1,6 +1,6 @@
 [build]
-  command = "npm run build"    # Se houver build; se não, pode ser vazio ou "echo 'Build complete'"
-  publish = "atividades_pcp"           # Pasta do seu front-end
+  command = "echo 'No build needed'"
+  publish = "atividades_pcp"
 
 [functions]
   directory = "netlify/functions"
