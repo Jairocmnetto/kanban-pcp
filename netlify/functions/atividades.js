@@ -1,9 +1,9 @@
 const mysql = require('mysql2/promise');
 
-console.log("DB_HOST:", process.env.DB_HOST);
-console.log("DB_USER:", process.env.DB_USER);
-console.log("DB_PASSWORD:", process.env.DB_PASSWORD);
-console.log("DB_NAME:", process.env.DB_NAME);
+console.log("DB_HOST:", process.DB_HOST);
+console.log("DB_USER:", process.DB_USER);
+console.log("DB_PASSWORD:", process.DB_PASSWORD);
+console.log("DB_NAME:", process.DB_NAME);
 
 
 const pool = mysql.createPool({
