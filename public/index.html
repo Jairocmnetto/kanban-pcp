@@ -4,29 +4,50 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Kanban PCP</title>
+  <!-- Fonte moderna -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --normal: linear-gradient(145deg, #ffffff, #e6e6e6);
-      --urgente: #ffeb3b;
-      --critico: #f44336;
-      --select-bg: #fff;
-      --select-border: #ccc;
-      --select-hover: #e6e6e6;
+      /* Paleta principal */
+      --bg-gradient: linear-gradient(135deg, #ffffff, #f1f1f1);
+      --bg-gradientm: linear-gradient(135deg, #ffffff, #e4ebff);
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --card-bgm: rgb(255, 0, 255);
+      --accent: #00e5ff;
+      --text-primary: #000000;
+      --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.37);
+      --border-glass: 1px solid rgba(255, 255, 255, 0.18);
+      --radius: 12px;
+      --transition: 0.3s ease;
     }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Poppins', sans-serif;
+      color: var(--text-primary);
     }
+
     body {
-      background: #f0f2f5;
+      background: var(--bg-gradient);
+      min-height: 100vh;
       padding: 20px;
     }
+
+    /* Envolve filtro + legenda para sticky conjunto */
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      background: var(--bg-gradient);
+      z-index: 100;
+    }
+
     /* Filtro Dropdown */
     .filtro-container {
-      margin-bottom: 20px;
       text-align: center;
+      margin-bottom: 20px;
     }
     .filtro-container label {
       font-weight: 500;
@@ -34,35 +55,23 @@
     }
     .filtro-container select {
       width: 320px;
-      padding: 10px;
+      padding: 12px;
       font-size: 16px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border: var(--border-glass);
+      box-shadow: var(--shadow-glass);
+      transition: background var(--transition), transform var(--transition);
+      cursor: pointer;
     }
-    .container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
+    .filtro-container select:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.08);
     }
-    .coluna {
-      background: #fff;
-      border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      min-height: 70vh;
-    }
-    .card {
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 8px;
-      cursor: move;
-      transition: transform 0.2s;
-    }
-    .card.urgente { background: var(--urgente); color: #000; }
-    .card.critico { background: var(--critico); color: #fff; }
-    .card.normal { background: var(--normal); color: #000; }
+
+    /* Legenda */
     .legenda {
       display: flex;
       gap: 10px;
@@ -74,135 +83,204 @@
       padding: 8px 15px;
       border-radius: 20px;
       font-size: 0.9em;
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border: var(--border-glass);
+      box-shadow: var(--shadow-glass);
     }
+    .legenda-item.urgente { border-left: 4px solid #ffeb3b; }
+    .legenda-item.critico { border-left: 4px solid #f44336; }
+    .legenda-item.regular { border-left: 4px solid #00e5ff; }
+    .legenda-item.normal { border-left: 4px solid #ffffff; }
+
+    /* Grid principal */
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Colunas */
+    .coluna {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border: var(--border-glass);
+      box-shadow: var(--shadow-glass);
+      border-radius: var(--radius);
+      padding: 20px;
+      min-height: 70vh;
+      transition: transform var(--transition);
+    }
+    .coluna:hover {
+      transform: translateY(-4px);
+    }
+    .coluna h2 {
+      margin-bottom: 15px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(6px);
+      border: var(--border-glass);
+      box-shadow: var(--shadow-glass);
+      border-left: 4px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: transform var(--transition), box-shadow var(--transition);
+      cursor: grab;
+    }
+    .card.urgente { border-left-color: #ffeb3b; }
+    .card.critico { border-left-color: #f44336; }
+    .card.normal { border-left-color: #ffffff; }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    }
+    .card p { margin: 6px 0; font-size: 0.95em; }
+    .card strong { color: #000000; }
+
+    /* Botão flutuante */
     .nova-demanda-btn {
       position: fixed;
       bottom: 30px;
       right: 30px;
-      background: #4CAF50;
-      color: white;
+      background: var(--accent);
+      color: #0d0d2b;
       border: none;
       border-radius: 50%;
       width: 60px;
       height: 60px;
-      font-size: 24px;
+      font-size: 32px;
       cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      transition: transform 0.3s;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      transition: transform var(--transition), box-shadow var(--transition);
       z-index: 1000;
     }
     .nova-demanda-btn:hover {
       transform: scale(1.1);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.6);
     }
+
+    /* Modais */
     .modal {
       display: none;
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.5);
+      inset: 0;
+      background: rgba(0,0,0,0.7);
       z-index: 1000;
+      align-items: center;
+      justify-content: center;
     }
     .modal-content {
-      background: white;
-      margin: 5% auto;
-      padding: 25px;
-      border-radius: 10px;
+      background: var(--bg-gradientm);
+      backdrop-filter: blur(10px);
+      border: var(--border-glass);
+      box-shadow: var(--shadow-glass);
+      border-radius: var(--radius);
+      padding: 30px;
       width: 90%;
       max-width: 500px;
       position: relative;
+      transition: transform var(--transition);
     }
+    .modal-content:hover { transform: translateY(-3px); }
     .modal-close {
       position: absolute;
-      top: 15px;
-      right: 15px;
+      top: 15px; right: 15px;
       font-size: 24px;
       cursor: pointer;
     }
+
+    /* Formulário */
     .form-group {
-      margin-bottom: 15px;
+      margin-bottom: 18px;
     }
     .form-group label {
       display: block;
-      margin-bottom: 5px;
+      margin-bottom: 6px;
       font-weight: 500;
     }
     .form-group input,
     .form-group select,
     .form-group textarea {
       width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+      padding: 12px;
       font-size: 14px;
+      border: none;
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(6px);
+      border: var(--border-glass);
+      box-shadow: var(--shadow-glass);
+      transition: background var(--transition);
     }
-    .form-group textarea {
-      height: 100px;
-      resize: vertical;
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      background: rgb(240, 240, 240);
+      outline: none;
     }
     .enviar-btn {
-      background: #2196F3;
-      color: white;
-      padding: 10px 20px;
+      background: var(--accent);
+      color: #0d0d2b;
+      padding: 12px 24px;
       border: none;
-      border-radius: 5px;
+      border-radius: var(--radius);
       font-size: 16px;
       cursor: pointer;
+      transition: background var(--transition), transform var(--transition);
     }
     .enviar-btn:hover {
-      background: #1976D2;
+      background: #00c0d9;
+      transform: translateY(-2px);
     }
-    /* Estilização moderna para o campo status */
-    .status-select {
-      appearance: none;
-      background-color: var(--select-bg);
-      border: 1px solid var(--select-border);
-      border-radius: 8px;
-      padding: 8px 10px;
-      transition: background-color 0.3s, border-color 0.3s;
-      cursor: pointer;
-    }
-    .status-select:hover,
-    .status-select:focus {
-      background-color: var(--select-hover);
-      border-color: var(--select-hover);
-    }
-    /* Botão Ver Descrição */
+
+    /* Botão ver descrição */
     .ver-descricao-btn {
-      background: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      padding: 5px 10px;
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 6px 12px;
+      font-size: 0.9em;
       cursor: pointer;
-      transition: background-color 0.3s;
+      transition: background var(--transition), color var(--transition);
       margin-top: 10px;
     }
     .ver-descricao-btn:hover {
-      background: #388E3C;
+      background: var(--accent);
+      color: #0d0d2b;
     }
+
     @media (max-width: 768px) {
-      .container {
-        grid-template-columns: 1fr;
-      }
-      .filtro-container select {
-        width: 90%;
-      }
+      .container { grid-template-columns: 1fr; }
+      .filtro-container select { width: 90%; }
     }
   </style>
 </head>
 <body>
-  <!-- Filtro Dropdown -->
-  <div class="filtro-container">
-    <label for="filtro-nomes">Filtrar por responsável:</label>
-    <select id="filtro-nomes" onchange="carregarAtividades()">
-      <!-- Opções serão preenchidas dinamicamente -->
-    </select>
-  </div>
 
-  <div class="legenda">
-    <div class="legenda-item urgente">Urgente</div>
-    <div class="legenda-item critico">Crítico</div>
-    <div class="legenda-item normal">Normal/Regular</div>
+  <!-- Envolvendo filtro + legenda -->
+  <div class="sticky-header">
+    <div class="filtro-container">
+      <label for="filtro-nomes">Filtrar por responsável:</label>
+      <select id="filtro-nomes" onchange="carregarAtividades()">
+        <!-- Opções serão preenchidas dinamicamente -->
+      </select>
+    </div>
+
+    <div class="legenda">
+      <div class="legenda-item urgente">Urgente</div>
+      <div class="legenda-item critico">Crítico</div>
+      <div class="legenda-item regular">Regular</div>
+      <div class="legenda-item normal">Normal</div>
+    </div>
   </div>
 
   <div class="container">
@@ -242,7 +320,6 @@
             <option value="">Selecione o cargo primeiro</option>
           </select>
         </div>
-        <!-- Novo campo Título -->
         <div class="form-group">
           <label>Título*</label>
           <input type="text" id="titulo" required placeholder="Digite o título da atividade" />
@@ -275,36 +352,29 @@
   </div>
 
   <script>
-    const API_URL = '/api/atividades';
+     const API_URL = '/api/atividades';
     const priorityOrder = ['Critico', 'Urgente', 'Regular', 'Normal'];
 
-    // Atualiza o dropdown do filtro com os responsáveis únicos e preserva a seleção atual
     function atualizarFiltroNomes(atividades) {
       const filtroSelect = document.getElementById('filtro-nomes');
-      // Guarda a seleção atual
       const selecionadoAtual = filtroSelect.value || 'todos';
-      // Extrai nomes únicos
       const nomesUnicos = [...new Set(atividades.map(a => a.nome))];
-      // Limpa as opções existentes
       filtroSelect.innerHTML = '';
-      // Cria a opção "TODOS"
       const todosOption = document.createElement('option');
       todosOption.value = 'todos';
       todosOption.textContent = 'TODOS';
       filtroSelect.appendChild(todosOption);
-      // Adiciona as opções dos nomes
       nomesUnicos.forEach(nome => {
         const option = document.createElement('option');
         option.value = nome;
         option.textContent = nome;
         filtroSelect.appendChild(option);
       });
-      // Restaura a seleção, se possível
       filtroSelect.value = selecionadoAtual;
     }
 
     function abrirModal() {
-      document.getElementById('modalNovaDemanda').style.display = 'block';
+      document.getElementById('modalNovaDemanda').style.display = 'flex';
     }
     function fecharModal() {
       document.getElementById('modalNovaDemanda').style.display = 'none';
@@ -319,22 +389,17 @@
         if (!response.ok) throw new Error('Erro na rede');
         let atividades = await response.json();
 
-        // Atualiza o dropdown de filtro e preserva a seleção atual
         atualizarFiltroNomes(atividades);
-
-        // Obtém o valor selecionado no dropdown
         const filtroSelect = document.getElementById('filtro-nomes');
         const selecionado = filtroSelect.value;
         if (selecionado !== 'todos') {
           atividades = atividades.filter(item => item.nome === selecionado);
         }
 
-        // Reordena as atividades conforme a ordem de prioridade
         atividades.sort((a, b) => {
           return priorityOrder.indexOf(a.prioridade) - priorityOrder.indexOf(b.prioridade);
         });
 
-        // Limpa as colunas
         document.querySelectorAll('.cards').forEach(col => col.innerHTML = '');
         atividades.forEach(atividade => {
           const card = criarCard(atividade);
@@ -344,11 +409,7 @@
             .replace(/[\u0300-\u036f]/g, '')
             .replace(/ /g, '-');
           const coluna = document.getElementById(statusId);
-          if (coluna) {
-            coluna.appendChild(card);
-          } else {
-            console.warn(`Elemento com id "${statusId}" não encontrado.`);
-          }
+          if (coluna) coluna.appendChild(card);
         });
       } catch (error) {
         console.error('Erro ao carregar atividades:', error);
@@ -391,7 +452,7 @@
     function verDescricao(atividade) {
       document.getElementById('descricao-titulo').textContent = `Título: ${atividade.titulo}`;
       document.getElementById('descricao-conteudo').textContent = atividade.descricao;
-      document.getElementById('modalDescricao').style.display = 'block';
+      document.getElementById('modalDescricao').style.display = 'flex';
     }
 
     function atualizarNomes() {
@@ -422,7 +483,6 @@
         prioridade: document.getElementById('prioridade').value,
         status: 'Não iniciado'
       };
-      console.log('Enviando:', novaDemanda);
       try {
         const response = await fetch(API_URL, {
           method: 'POST',
@@ -441,7 +501,7 @@
         alert('Falha na conexão. Tente novamente.');
       }
     });
-    
+
     document.addEventListener('DOMContentLoaded', carregarAtividades);
   </script>
 </body>
