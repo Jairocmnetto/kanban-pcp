@@ -4,18 +4,20 @@ const cors = require('cors');
 const { Pool } = require('pg');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+const PORT = process.env.PORT || 3000;
 
-// Conexão com o PostgreSQL via variável de ambiente RAILWAY_DATABASE_URL
+// Conexão com o PostgreSQL do Railway (SSL desativando verificação de certificado autoassinado)
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_URL || 'postgres://postgres:IzePzCJWaMAZIAZEaBpZVJAxiXFtNbSR@mainline.proxy.rlwy.net:14502/railway',
   ssl: {
     rejectUnauthorized: false
   }
 });
 
-// GET /api/atividades
+app.use(cors());
+app.use(express.json());
+
+// Rotas da API
 app.get('/api/atividades', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM atividades ORDER BY prioridade');
@@ -26,7 +28,6 @@ app.get('/api/atividades', async (req, res) => {
   }
 });
 
-// PUT /api/atividades/:id/status
 app.put('/api/atividades/:id/status', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -39,7 +40,6 @@ app.put('/api/atividades/:id/status', async (req, res) => {
   }
 });
 
-// POST /api/atividades
 app.post('/api/atividades', async (req, res) => {
   const { cargo, nome, titulo, descricao, prioridade, status } = req.body;
   try {
@@ -55,5 +55,6 @@ app.post('/api/atividades', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`API rodando na porta ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`API rodando na porta ${PORT}`);
+});
