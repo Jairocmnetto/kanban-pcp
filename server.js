@@ -1,33 +1,24 @@
 require('dotenv').config();
 const express = require('express');
-const mysql = require('mysql2/promise');
 const cors = require('cors');
-const path = require('path');
+const { Pool } = require('pg');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Conexão com MySQL
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
+// Conexão com o PostgreSQL via variável de ambiente RAILWAY_DATABASE_URL
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
-// Rota para obter as atividades
+// GET /api/atividades
 app.get('/api/atividades', async (req, res) => {
   try {
-    const [rows] = await pool.query(`
-      SELECT * FROM atividades
-      ORDER BY FIELD(prioridade, 'Critico', 'Urgente', 'Regular', 'Normal')
-    `);
+    const { rows } = await pool.query('SELECT * FROM atividades ORDER BY prioridade');
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -35,30 +26,34 @@ app.get('/api/atividades', async (req, res) => {
   }
 });
 
-// Rota para criar uma nova atividade
-app.post('/api/atividades', async (req, res) => {
-  try {
-    const [result] = await pool.query('INSERT INTO atividades SET ?', req.body);
-    res.status(201).json({ id: result.insertId, ...req.body });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erro ao criar atividade' });
-  }
-});
-
-// Rota para atualizar o status de uma atividade
+// PUT /api/atividades/:id/status
 app.put('/api/atividades/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
   try {
-    const { status } = req.body;
-    const { id } = req.params;
-    await pool.query('UPDATE atividades SET status = ? WHERE id = ?', [status, id]);
-    res.json({ success: true });
+    await pool.query('UPDATE atividades SET status = $1 WHERE id = $2', [status, id]);
+    res.sendStatus(204);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erro ao atualizar status' });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+// POST /api/atividades
+app.post('/api/atividades', async (req, res) => {
+  const { cargo, nome, titulo, descricao, prioridade, status } = req.body;
+  try {
+    const query = `
+      INSERT INTO atividades(cargo,nome,titulo,descricao,prioridade,status)
+      VALUES($1,$2,$3,$4,$5,$6) RETURNING *`;
+    const values = [cargo, nome, titulo, descricao, prioridade, status];
+    const { rows } = await pool.query(query, values);
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao criar atividade' });
+  }
 });
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`API rodando na porta ${PORT}`));
