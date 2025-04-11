@@ -6,6 +6,8 @@
   <title>Kanban PCP</title>
   <!-- Fonte moderna -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- SMTPJS para envio de e-mails -->
+  <script src="https://smtpjs.com/v3/smtp.js"></script>
 
   <style>
     :root {
@@ -13,7 +15,6 @@
       --bg-gradient: linear-gradient(135deg, #ffffff, #f1f1f1);
       --bg-gradientm: linear-gradient(135deg, #ffffff, #e4ebff);
       --card-bg: rgba(255, 255, 255, 0.05);
-      --card-bgm: rgb(255, 0, 255);
       --accent: #00e5ff;
       --text-primary: #000000;
       --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.37);
@@ -36,7 +37,6 @@
       padding: 20px;
     }
 
-    /* Envolve filtro + legenda para sticky conjunto */
     .sticky-header {
       position: sticky;
       top: 0;
@@ -44,7 +44,6 @@
       z-index: 100;
     }
 
-    /* Filtro Dropdown */
     .filtro-container {
       text-align: center;
       margin-bottom: 20px;
@@ -71,7 +70,6 @@
       background: rgba(255,255,255,0.08);
     }
 
-    /* Legenda */
     .legenda {
       display: flex;
       gap: 10px;
@@ -93,16 +91,14 @@
     .legenda-item.regular { border-left: 4px solid #00e5ff; }
     .legenda-item.normal { border-left: 4px solid #ffffff; }
 
-    /* Grid principal */
     .container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
       max-width: 1200px;
       margin: 0 auto;
     }
 
-    /* Colunas */
     .coluna {
       background: var(--card-bg);
       backdrop-filter: blur(10px);
@@ -122,7 +118,6 @@
       letter-spacing: 0.5px;
     }
 
-    /* Cards */
     .card {
       background: var(--card-bg);
       backdrop-filter: blur(6px);
@@ -130,8 +125,8 @@
       box-shadow: var(--shadow-glass);
       border-left: 4px solid var(--accent);
       border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
       transition: transform var(--transition), box-shadow var(--transition);
       cursor: grab;
     }
@@ -142,10 +137,14 @@
       transform: translateY(-5px);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
     }
-    .card p { margin: 6px 0; font-size: 0.95em; }
-    .card strong { color: #000000; }
+    .card p {
+      margin: 4px 0;
+      font-size: 0.95em;
+    }
+    .card strong {
+      color: #000000;
+    }
 
-    /* Botão flutuante */
     .nova-demanda-btn {
       position: fixed;
       bottom: 30px;
@@ -167,7 +166,6 @@
       box-shadow: 0 12px 24px rgba(0, 0, 0, 0.6);
     }
 
-    /* Modais */
     .modal {
       display: none;
       position: fixed;
@@ -197,7 +195,6 @@
       cursor: pointer;
     }
 
-    /* Formulário */
     .form-group {
       margin-bottom: 18px;
     }
@@ -241,17 +238,16 @@
       transform: translateY(-2px);
     }
 
-    /* Botão ver descrição */
     .ver-descricao-btn {
       background: transparent;
       color: var(--accent);
       border: 1px solid var(--accent);
       border-radius: var(--radius);
-      padding: 6px 12px;
+      padding: 6px 8px;
       font-size: 0.9em;
       cursor: pointer;
       transition: background var(--transition), color var(--transition);
-      margin-top: 10px;
+      margin-top: 1px;
     }
     .ver-descricao-btn:hover {
       background: var(--accent);
@@ -266,7 +262,6 @@
 </head>
 <body>
 
-  <!-- Envolvendo filtro + legenda -->
   <div class="sticky-header">
     <div class="filtro-container">
       <label for="filtro-nomes">Filtrar por responsável:</label>
@@ -300,7 +295,6 @@
 
   <button class="nova-demanda-btn" onclick="abrirModal()">+</button>
 
-  <!-- Modal para cadastrar nova demanda -->
   <div id="modalNovaDemanda" class="modal">
     <div class="modal-content">
       <span class="modal-close" onclick="fecharModal()">&times;</span>
@@ -342,7 +336,6 @@
     </div>
   </div>
 
-  <!-- Modal para exibir descrição -->
   <div id="modalDescricao" class="modal">
     <div class="modal-content">
       <span class="modal-close" onclick="fecharModalDescricao()">&times;</span>
@@ -352,8 +345,16 @@
   </div>
 
   <script>
-     const API_URL = '/api/atividades';
+    const API_URL = 'https://kanban-pcp-api-production.up.railway.app/api/atividades';
     const priorityOrder = ['Critico', 'Urgente', 'Regular', 'Normal'];
+
+    // mapeamento de nomes para e‑mail
+    const emailMap = {
+      'Jairo Melo': 'jairo.melo@grupodass.com.br',
+      'Josean Leao': 'josean.silva@grupodass.com.br',
+      'Reivisson Carvalho': 'reivisson.santos@grupodass.com.br',
+      'Adenilton Lima': 'adenilton.gomes@grupodass.com.br'
+    };
 
     function atualizarFiltroNomes(atividades) {
       const filtroSelect = document.getElementById('filtro-nomes');
@@ -423,7 +424,6 @@
       card.innerHTML = `
         <p><strong>Responsável:</strong> ${atividade.nome}</p>
         <p><strong>Título:</strong> ${atividade.titulo}</p>
-        <p><strong>Prioridade:</strong> ${atividade.prioridade}</p>
         <select class="status-select" onchange="atualizarStatus(this, ${atividade.id})">
           <option ${atividade.status === 'Não iniciado' ? 'selected' : ''}>Não iniciado</option>
           <option ${atividade.status === 'Em processo' ? 'selected' : ''}>Em processo</option>
@@ -461,7 +461,7 @@
       nomeSelect.innerHTML = '';
       const nomes = {
         'Coordenador de PCP': ['Jairo Melo'],
-        'Analista de PCP': ['Josean Leao', 'Reivisson Carvalho', 'Adenilton D\'Lima']
+        'Analista de PCP': ['Josean Leao', 'Reivisson Carvalho', 'Adenilton Lima']
       };
       if (cargo && nomes[cargo]) {
         nomes[cargo].forEach(nome => {
@@ -490,9 +490,33 @@
           body: JSON.stringify(novaDemanda)
         });
         if (response.ok) {
+          // Dispara e‑mail ao responsável
+          const toEmail = emailMap[novaDemanda.nome];
+          if (toEmail) {
+            Email.send({
+              SecureToken: "fc1bada2-4534-4ed5-9b1e-54ea11a82f55",
+              To: toEmail,
+              From: "jairo.melo@grupodass.com.br",
+              Subject: "Nova atividade cadastrada",
+              Body: `
+                <p>Olá ${novaDemanda.nome},</p>
+                <p>Uma nova atividade foi cadastrada para você:</p>
+                <ul>
+                  <li><strong>Título:</strong> ${novaDemanda.titulo}</li>
+                  <li><strong>Descrição:</strong> ${novaDemanda.descricao}</li>
+                  <li><strong>Prioridade:</strong> ${novaDemanda.prioridade}</li>
+                </ul>
+                <p>Por favor, verifique o sistema para mais detalhes.</p>
+              `
+            })
+            .then(message => console.log("Email enviado:", message))
+            .catch(err => console.error("Erro ao enviar email:", err));
+          }
+
           fecharModal();
           await carregarAtividades();
           document.getElementById('formNovaDemanda').reset();
+          alert('Demanda cadastrada e e‑mail enviado ao responsável!');
         } else {
           alert('Erro ao enviar demanda');
         }
