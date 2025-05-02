@@ -145,6 +145,39 @@
       color: #000000;
     }
 
+    /* Estilos para cards finalizados (mínimos) */
+    .card.finalizado {
+      padding: 8px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: default;
+    }
+    .card.finalizado p {
+      margin: 0;
+      font-size: 0.95em;
+      flex: 1;
+    }
+    .card.finalizado select {
+      display: none;
+    }
+    .ver-descricao-btn.small {
+      padding: 4px 8px;
+      font-size: 0.9em;
+      background: var(--accent);
+      color: #0d0d2b;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      margin-right: 8px;
+      transition: background var(--transition), transform var(--transition);
+    }
+    .ver-descricao-btn.small:hover {
+      background: #00c0d9;
+      transform: translateY(-1px);
+    }
+
     .nova-demanda-btn {
       position: fixed;
       bottom: 30px;
@@ -304,7 +337,7 @@
           <label>Cargo*</label>
           <select id="cargo" required onchange="atualizarNomes()">
             <option value="">Selecione o cargo</option>
-                <option value="Gerente de PCP">Gerente de PCP</option>
+            <option value="Gerente de PCP">Gerente de PCP</option>
             <option value="Coordenador de PCP">Coordenador de PCP</option>
             <option value="Analista de PCP">Analista de PCP</option>
           </select>
@@ -421,18 +454,30 @@
     }
 
     function criarCard(atividade) {
+      const isFinalizado = atividade.status === 'Finalizado';
       const card = document.createElement('div');
-      card.className = `card ${atividade.prioridade.toLowerCase()}`;
-      card.innerHTML = `
-        <p><strong>Responsável:</strong> ${atividade.nome}</p>
-        <p><strong>Título:</strong> ${atividade.titulo}</p>
-        <select class="status-select" onchange="atualizarStatus(this, ${atividade.id})">
-          <option ${atividade.status === 'Não iniciado' ? 'selected' : ''}>Não iniciado</option>
-          <option ${atividade.status === 'Em processo' ? 'selected' : ''}>Em processo</option>
-          <option ${atividade.status === 'Finalizado' ? 'selected' : ''}>Finalizado</option>
-        </select>
-        <button class="ver-descricao-btn" onclick='verDescricao(${JSON.stringify(atividade)})'>Ver Descrição</button>
-      `;
+      card.className = `card ${atividade.prioridade.toLowerCase()}${isFinalizado ? ' finalizado' : ''}`;
+
+      if (isFinalizado) {
+        // Apenas título e botão "Ver"
+        card.innerHTML = `
+          <button class="ver-descricao-btn small" onclick='verDescricao(${JSON.stringify(atividade)})'>Ver</button>
+          <p><strong>${atividade.titulo}</strong></p>
+        `;
+      } else {
+        // Card normal
+        card.innerHTML = `
+          <p><strong>Responsável:</strong> ${atividade.nome}</p>
+          <p><strong>Título:</strong> ${atividade.titulo}</p>
+          <select class="status-select" onchange="atualizarStatus(this, ${atividade.id})">
+            <option ${atividade.status === 'Não iniciado' ? 'selected' : ''}>Não iniciado</option>
+            <option ${atividade.status === 'Em processo' ? 'selected' : ''}>Em processo</option>
+            <option ${atividade.status === 'Finalizado' ? 'selected' : ''}>Finalizado</option>
+          </select>
+          <button class="ver-descricao-btn" onclick='verDescricao(${JSON.stringify(atividade)})'>Ver Descrição</button>
+        `;
+      }
+
       return card;
     }
 
@@ -493,7 +538,6 @@
           body: JSON.stringify(novaDemanda)
         });
         if (response.ok) {
-          // Dispara e‑mail ao responsável
           const toEmail = emailMap[novaDemanda.nome];
           if (toEmail) {
             Email.send({
